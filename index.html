@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Humana Write Check</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: inputs on the left, one big red or green answer on the right; stacks on phones. */
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --fg:#15232C; --muted:#586873; --line:#D3DBE0; --field:#F7F9FA;
+  --accent:#0B6B61; --accent-fg:#FFFFFF; --accent-soft:#DDEFEC;
+  --ok:#17803F; --bad:#B3261E; --verdict-fg:#FFFFFF;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F181D; --surface:#17232A; --fg:#E6EEF1; --muted:#98A9B3; --line:#2B3B44; --field:#101B21;
+  --accent:#4FC4B5; --accent-fg:#062622; --accent-soft:#16352F; --ok:#1F8F4B; --bad:#C93A30; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F181D; --surface:#17232A; --fg:#E6EEF1; --muted:#98A9B3; --line:#2B3B44; --field:#101B21;
+  --accent:#4FC4B5; --accent-fg:#062622; --accent-soft:#16352F; --ok:#1F8F4B; --bad:#C93A30; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font);padding-block:28px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:26px;line-height:1.15;margin:0;font-weight:600}
+.sub{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.note{background:var(--accent-soft);border-radius:8px;padding:10px 12px;font-size:15px;font-weight:600}
+.grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:stretch}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.field{display:flex;flex-direction:column;gap:6px;border:0;padding:0;margin:0;min-width:0}
+label,legend{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0}
+.hint{font-size:12.5px;color:var(--muted)}
+input[type=text],select{width:100%;font:500 16px var(--mono);color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
+select{font-family:var(--font);font-weight:500}
+input::placeholder{color:var(--muted);opacity:.7;font-weight:400}
+input:focus-visible,select:focus-visible,button:focus-visible,.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--field)}
+.seg label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;font-weight:500;color:var(--fg);position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:10px 8px;min-height:44px;line-height:24px}
+.seg input:checked+span{background:var(--accent);color:var(--accent-fg);font-weight:600}
+button{font:600 14px var(--font);border-radius:8px;min-height:40px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg);align-self:flex-start}
+button:hover{border-color:var(--accent)}
+.ex{font-size:13px;color:var(--muted);margin:0}
+.result{border-radius:10px;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-height:220px;min-width:0}
+.result .big{font-size:40px;line-height:1.05;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.result p{margin:0;font-size:16px;max-width:52ch}
+.r-bad{background:var(--bad);color:var(--verdict-fg)} .r-ok{background:var(--ok);color:var(--verdict-fg)}
+.r-wait{background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.r-wait .big{font-size:22px;font-weight:500;color:var(--fg)}
+@media (prefers-reduced-motion:no-preference){.result{animation:rise .15s ease-out}@keyframes rise{from{opacity:.5;transform:translateY(3px)}}}
+html{color-scheme:light}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+.brand{display:flex;align-items:center;min-height:44px;margin-bottom:14px}
+.brand img{height:44px;width:auto;display:block}
+.brand .wordmark{font-weight:600;font-size:18px;letter-spacing:.01em}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><img id="logo" src="blueprint-logo.png" alt="Blueprint Health Agency"></div>
+    <h1>Humana Write Check</h1>
+    <p class="sub">Enter the client's current plan, their state and the plan you want to write.</p>
+  </header>
+
+  <div class="note">UnitedHealthcare non-SNP PPOs - Do not write. All UHC C-SNPs &amp; D-SNPs are okay to sell.</div>
+
+  <div class="grid">
+    <form class="panel" id="form" autocomplete="off" novalidate>
+      <div class="field">
+        <label for="cur">Current Humana plan</label>
+        <input type="text" id="cur" placeholder="H5216 or H5216-012-000" spellcheck="false" autocapitalize="characters">
+      </div>
+      <div class="field">
+        <label for="state">Client's state</label>
+        <select id="state"></select>
+      </div>
+      <fieldset class="field">
+        <legend>Proposed plan</legend>
+        <div class="seg">
+          <label><input type="radio" name="pcarrier" value="humana" checked><span>Humana</span></label>
+          <label><input type="radio" name="pcarrier" value="uhc"><span>UHC</span></label>
+        </div>
+      </fieldset>
+      <div class="field" id="propField">
+        <label for="prop">Humana plan code</label>
+        <input type="text" id="prop" placeholder="H7617-089-000" spellcheck="false" autocapitalize="characters">
+        <span class="hint">Use the full plan code.</span>
+      </div>
+      <div class="field" id="uhcFields" hidden>
+        <label for="uhcType">UHC plan type</label>
+        <select id="uhcType"><option value="ppo">PPO</option><option value="hmo">HMO</option><option value="other">Other plan type</option></select>
+        <label for="uhcSnp" style="margin-top:6px">Special needs plan</label>
+        <select id="uhcSnp"><option value="none">Not a special needs plan</option><option value="csnp">C-SNP</option><option value="dsnp">D-SNP</option></select>
+      </div>
+      <p class="ex" id="example">Example loaded. Replace it with your client's details.</p>
+      <button type="button" id="clear">Clear all</button>
+    </form>
+
+    <section id="out" aria-live="polite"></section>
+  </div>
+</div>
+
+<script>
+(function(){var l=document.getElementById("logo");if(!l)return;l.addEventListener("error",function(){var s=document.createElement("span");s.className="wordmark";s.textContent="Blueprint Health Agency";l.replaceWith(s);});if(l.complete&&l.naturalWidth===0){l.dispatchEvent(new Event("error"));}})();
+</script>
+<script>
+const R1=[["H5216","H7617"],["H0028","H4461"],["H4623","H4461"],["H5619","H1036"],["H6622","H1036"]];
+const ANY_TO=["H5216"];
+const R2=[["Alabama","H7617-089-000","PPO",""],["Alabama","H7617-091-000","PPO",""],["Arizona","H4461-056-000","HMO",""],["Arizona","H4461-059-000","HMO",""],["Arizona","H7617-051-000","PPO",""],["Arkansas","H7617-066-000","PPO","All Counties except Lawrence Co."],["Arkansas","H7617-012-000","PPO",""],["Arkansas","H7617-056-000","PPO",""],["Arkansas","H7617-074-000","PPO",""],["Arkansas","H7617-075-000","PPO",""],["Arkansas","H7617-077-000","PPO",""],["Colorado","H7617-061-000","PPO",""],["Colorado","H7617-064-000","PPO",""],["Colorado","H7617-067-000","PPO",""],["Delaware","H7617-100-000","PPO",""],["Florida","H7617-107-000","PPO",""],["Florida","H7617-108-000","PPO",""],["Florida","H7617-109-000","PPO",""],["Florida","H7617-110-000","PPO",""],["Florida","H7617-111-000","PPO",""],["Georgia","H7617-093-000","PPO",""],["Georgia","H7617-094-000","PPO",""],["Georgia","H7617-095-000","PPO",""],["Georgia","H7617-096-000","PPO",""],["Idaho","H7617-031-000","PPO",""],["Illinois","H7617-008-000","PPO",""],["Illinois","H7617-012-000","PPO",""],["Illinois","H7617-018-000","PPO",""],["Illinois","H7617-022-000","PPO",""],["Illinois","H7617-023-000","PPO",""],["Indiana","H7617-003-000","PPO",""],["Indiana","H7617-049-000","PPO",""],["Indiana","H7617-050-000","PPO",""],["Indiana","H7617-060-000","PPO",""],["Indiana","H7617-073-000","PPO",""],["Kansas","H4461-047-000","HMO",""],["Kansas","H7617-010-000","PPO",""],["Kansas","H7617-012-000","PPO",""],["Kansas","H7617-015-000","PPO",""],["Kansas","H7617-017-000","PPO",""],["Kentucky","H7617-003-000","PPO",""],["Kentucky","H7617-004-000","PPO",""],["Kentucky","H7617-005-000","PPO",""],["Kentucky","H7617-049-000","PPO",""],["Kentucky","H7617-050-000","PPO",""],["Louisiana","H7617-080-000","PPO",""],["Louisiana","H7617-081-000","PPO",""],["Maine","H7617-046-000","PPO",""],["Maryland","H7617-044-000","PPO",""],["Massachusetts","H7617-046-000","PPO",""],["Michigan","H7617-052-000","PPO",""],["Michigan","H7617-054-000","PPO",""],["Michigan","H7617-055-000","PPO",""],["Michigan","H7617-058-000","PPO",""],["Michigan","H7617-071-000","PPO",""],["Mississippi","H7617-082-000","PPO",""],["Mississippi","H7617-083-000","PPO",""],["Mississippi","H7617-084-000","PPO",""],["Mississippi","H7617-085-000","PPO",""],["Mississippi","H7617-086-000","PPO",""],["Mississippi","H7617-087-000","PPO",""],["Missouri","H4461-045-000","HMO",""],["Missouri","H4461-046-000","HMO",""],["Missouri","H4461-047-000","HMO",""],["Missouri","H4461-048-000","HMO",""],["Missouri","H7617-008-000","PPO",""],["Missouri","H7617-010-000","PPO",""],["Missouri","H7617-012-000","PPO",""],["Missouri","H7617-014-000","PPO",""],["Missouri","H7617-017-000","PPO",""],["Missouri","H7617-023-000","PPO",""],["Montana","H7617-030-000","PPO",""],["Nevada","H7617-070-000","PPO",""],["New Hampshire","H7617-046-000","PPO",""],["New Jersey","H7617-045-000","PPO",""],["New Mexico","H4461-064-000","HMO",""],["Ohio","H7617-003-000","PPO",""],["Ohio","H7617-004-000","PPO",""],["Ohio","H7617-060-000","PPO",""],["Ohio","H7617-073-000","PPO",""],["Oklahoma","H7617-012-000","PPO",""],["Oklahoma","H7617-053-000","PPO",""],["Oklahoma","H7617-056-000","PPO",""],["Oklahoma","H7617-076-000","PPO",""],["Oklahoma","H7617-078-000","PPO",""],["Oregon","H7617-031-000","PPO",""],["South Carolina","H7617-094-000","PPO",""],["South Carolina","H7617-095-000","PPO",""],["South Carolina","H7617-096-000","PPO",""],["Tennessee","H7617-088-000","PPO",""],["Texas","H4461-049-000","HMO",""],["Texas","H4461-050-000","HMO",""],["Texas","H4461-051-000","HMO",""],["Texas","H4461-052-000","HMO",""],["Texas","H4461-053-000","HMO",""],["Texas","H4461-054-000","HMO",""],["Texas","H4461-055-000","HMO",""],["Texas","H4461-057-000","HMO",""],["Texas","H4461-058-000","HMO",""],["Texas","H4461-060-000","HMO",""],["Texas","H4461-061-000","HMO",""],["Texas","H4461-062-000","HMO",""],["Texas","H4461-066-000","HMO",""],["Texas","H4461-067-000","HMO",""],["Texas","H4461-069-000","HMO",""],["Texas","H4461-071-000","HMO",""],["Texas","H7617-029-000","PPO",""],["Texas","H7617-035-000","PPO",""],["Texas","H7617-040-000","PPO",""],["Texas","H7617-041-000","PPO",""],["Texas","H7617-042-000","PPO",""],["Texas","H7617-043-000","PPO",""],["Texas","H7617-057-000","PPO",""],["Texas","H7617-059-000","PPO",""],["Texas","H7617-062-000","PPO",""],["Texas","H7617-063-000","PPO",""],["Utah","H7617-021-000","PPO",""],["Utah","H7617-032-000","PPO",""],["Vermont","H7617-046-000","PPO",""],["Virginia","H1036-333-000","HMO",""],["Virginia","H1036-334-000","HMO",""],["Virginia","H7617-098-000","PPO",""],["Virginia","H7617-100-000","PPO",""],["Virginia","H7617-101-000","PPO",""],["Washington","H1036-321-000","HMO",""],["Washington","H1036-322-000","HMO",""],["Washington","H7617-019-000","PPO",""],["Washington","H7617-021-000","PPO",""],["West Virginia","H7617-065-000","PPO",""],["West Virginia","H7617-072-000","PPO",""],["Wisconsin","H7617-020-000","PPO",""],["Wisconsin","H7617-022-000","PPO",""]]; // [state, plan, type, countyNote]
+const STATES=["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","District of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function parse(raw){
+  const s=(raw||"").toUpperCase().replace(/[\s_]/g,"");
+  if(!s) return {empty:true};
+  const m=s.match(/^H(\d{4})(?:-?(\d{3}))?(?:-?(\d{3}))?$/);
+  if(!m) return {bad:true};
+  const contract="H"+m[1];
+  return {contract, plan:m[2]?contract+"-"+m[2]+"-"+(m[3]||"000"):null};
+}
+function show(kind,big,msg){
+  const cls={bad:"r-bad",ok:"r-ok",wait:"r-wait"}[kind];
+  $("out").innerHTML=`<div class="result ${cls}"><div class="big">${big}</div>${msg?`<p>${msg}</p>`:""}</div>`;
+}
+const BAD="Do not write", OK="Okay to submit";
+
+function render(){
+  const pc=document.querySelector('input[name=pcarrier]:checked').value;
+  $("propField").hidden=pc!=="humana";
+  $("uhcFields").hidden=pc!=="uhc";
+  const state=$("state").value;
+
+  if(pc==="uhc"){
+    const type=$("uhcType").value, snp=$("uhcSnp").value;
+    if(type==="ppo"&&snp==="none") return show("bad",BAD,"UnitedHealthcare PPOs that are not C-SNPs or D-SNPs can't be written.");
+    return show("ok",OK,type==="ppo"?"UnitedHealthcare C-SNPs and D-SNPs are okay to sell.":"The UnitedHealthcare rule only blocks non-SNP PPOs.");
+  }
+
+  const cur=parse($("cur").value), prop=parse($("prop").value);
+  if(cur.empty) return show("wait","Enter the current plan");
+  if(cur.bad) return show("wait","Check the current plan code","Use a code like H5216 or H5216-012-000.");
+  if(prop.empty) return show("wait","Enter the proposed plan");
+  if(prop.bad) return show("wait","Check the proposed plan code","Use a code like H7617-089-000.");
+
+  // Contract rules
+  let hit=R1.find(([f,t])=>f===cur.contract&&t===prop.contract);
+  if(!hit&&ANY_TO.includes(prop.contract)) hit=["any",prop.contract];
+  if(hit) return show("bad",BAD,"No commission is paid and the enrollment does not count toward tiers.");
+
+  // State rules
+  if(prop.plan){
+    const rows=R2.filter(r=>r[1]===prop.plan);
+    if(!state&&rows.length) return show("wait","Choose the client's state");
+    const m=rows.find(r=>r[0]===state);
+    if(m) return show("bad",BAD,m[3]?`Not allowed in ${esc(state)}, except in ${esc(m[3].replace("All Counties except ",""))}`:`Not allowed in ${esc(state)}.`);
+    return show("ok",OK);
+  }
+  if(!state) return show("wait","Enter the full plan code and choose a state");
+  if(R2.some(r=>r[0]===state&&r[1].startsWith(prop.contract+"-"))) return show("wait","Enter the full plan code","Some "+esc(prop.contract)+" plans are not allowed in "+esc(state)+".");
+  return show("ok",OK);
+}
+
+function touched(){ $("example").hidden=true; render(); }
+$("state").innerHTML='<option value="">Choose a state</option>'+STATES.map(s=>`<option>${s}</option>`).join("");
+$("state").value="Texas"; $("cur").value="H5216"; $("prop").value="H7617-089-000";
+["cur","prop"].forEach(id=>$(id).addEventListener("input",touched));
+["state","uhcType","uhcSnp"].forEach(id=>$(id).addEventListener("change",touched));
+document.querySelectorAll("input[name=pcarrier]").forEach(r=>r.addEventListener("change",touched));
+$("form").addEventListener("submit",e=>e.preventDefault());
+$("clear").addEventListener("click",()=>{$("cur").value="";$("prop").value="";$("state").value="";document.querySelector('input[name=pcarrier][value=humana]').checked=true;$("uhcType").value="ppo";$("uhcSnp").value="none";touched();$("cur").focus();});
+render();
+</script>
+</body>
+</html>
