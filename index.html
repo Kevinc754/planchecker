@@ -71,6 +71,8 @@ img{max-width:100%}
 
   <div class="note">UnitedHealthcare non-SNP PPOs - Do not write. All UHC C-SNPs &amp; D-SNPs are okay to sell.</div>
 
+  <div class="note" style="background:var(--bad);color:var(--verdict-fg);font-size:16px">NO ENROLLMENTS into any Humana plan starting with H5216. Do not write H5216 plans, no matter what the client has now.</div>
+
   <div class="grid">
     <form class="panel" id="form" autocomplete="off" novalidate>
       <div class="field">
@@ -145,6 +147,7 @@ function render(){
   }
 
   const cur=parse($("cur").value), prop=parse($("prop").value);
+  if(prop.contract==="H5216") return show("bad",BAD,"No enrollments into any Humana H5216 plan, from any current plan.");
   if(cur.empty) return show("wait","Enter the current plan");
   if(cur.bad) return show("wait","Check the current plan code","Use a code like H5216 or H5216-012-000.");
   if(prop.empty) return show("wait","Enter the proposed plan");
